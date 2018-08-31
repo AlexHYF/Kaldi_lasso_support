@@ -705,6 +705,111 @@ static void _add_mat(Real alpha, const Real* src, Real* dst, MatrixDim d,
     dst[index] = alpha * src[index_src] + dst[index];
 }
 
+template  <typename Dtype>
+__global__ void col_group_lasso_kernel(const int n, const int c, const Dtype *x, Dtype* y){
+	int n_offset = 0;
+		//initialize y
+		while(n_offset<n){
+			//int idx1 = (n_offset+threadIdx.y)*gridDim.x+blockIdx.x;
+			int idx1 = (n_offset+threadIdx.y)*c+blockIdx.x;
+			if(n_offset+threadIdx.y < n){//BUG: THE N MUST BE MULTIPLE TIMES OF BLOCKDIM.Y IN CURRENT IMPLEMENTATION !!!
+				y[idx1] = x[idx1]*x[idx1];
+			}
+			n_offset += blockDim.y;
+		}
+		__syncthreads();
+#define PUR 1e-4
+		//sum along columns
+		n_offset=0;
+		Dtype res = PUR;
+		while(n_offset<n){
+			int len = (n_offset + blockDim.y)<n ? blockDim.y : (n-n_offset);//valid threads to process
+			while(len/2>0){
+				if(threadIdx.y<len/2){
+					//int idx1 = (n_offset+threadIdx.y)*gridDim.x+blockIdx.x;
+					//int idx2 = (n_offset+threadIdx.y+(len+1)/2)*gridDim.x+blockIdx.x;
+					int idx1 = (n_offset+threadIdx.y)*c+blockIdx.x;
+					int idx2 = (n_offset+threadIdx.y+(len+1)/2)*c+blockIdx.x;
+					y[idx1] += y[idx2];
+				}
+				__syncthreads();
+				len=(len+1)/2;
+			}
+
+			//res += y[n_offset*gridDim.x+blockIdx.x];
+			res += y[n_offset*c+blockIdx.x];
+			n_offset += blockDim.y;
+		}
+		__syncthreads();
+
+		//copy
+		n_offset=0;
+		while(n_offset<n){
+			//int idx1 = (n_offset+threadIdx.y)*gridDim.x+blockIdx.x;
+			int idx1 = (n_offset+threadIdx.y)*c + blockIdx.x;
+			if(n_offset+threadIdx.y < n){
+				if(res){
+					y[idx1] = x[idx1]/Dtype(sqrt(res));
+				}else{
+					y[idx1] = Dtype(0);
+				}
+			}
+		  	n_offset += blockDim.y;
+		}
+}
+template  <typename Dtype>
+__global__ void row_group_lasso_kernel(const int n, const int c, const Dtype *x, Dtype* y){
+	int c_offset = 0;
+
+		//initialize y
+		while(c_offset<c){
+			//int idx1 = blockIdx.y * blockDim.x + c_offset + threadIdx.x;
+			int idx1 = blockIdx.y * c + c_offset + threadIdx.x;
+			if(c_offset + threadIdx.x < c){//WITHOUT THIS: THE C MUST BE MULTIPLE TIMES OF BLOCKDIM.X IN CURRENT IMPLEMENTATION !!!
+				y[idx1] = x[idx1]*x[idx1];
+			}
+			c_offset += blockDim.x;
+		}
+		__syncthreads();
+
+		//sum along rows
+		c_offset=0;
+		Dtype res = PUR;
+		while(c_offset<c){
+			int len = (c_offset + blockDim.x)<c ? blockDim.x : (c-c_offset);//valid threads to process
+			while(len/2>0){
+				if(threadIdx.x<len/2){
+					//int idx1 = blockIdx.y * blockDim.x + c_offset + threadIdx.x;
+					//int idx2 = blockIdx.y * blockDim.x + c_offset + threadIdx.x + (len+1)/2;
+					int idx1 = blockIdx.y * c + c_offset + threadIdx.x;
+					int idx2 = blockIdx.y * c + c_offset + threadIdx.x + (len+1)/2;
+					y[idx1] += y[idx2];
+				}
+				__syncthreads();
+				len=(len+1)/2;
+			}
+
+			//res += y[blockIdx.y * blockDim.x + c_offset];
+			res += y[blockIdx.y * c + c_offset];
+			c_offset += blockDim.x;
+		}
+		__syncthreads();
+
+		//copy
+		c_offset=0;
+		while(c_offset<c){
+			//int idx1 = blockIdx.y * blockDim.x + c_offset + threadIdx.x;
+			int idx1 = blockIdx.y * c + c_offset + threadIdx.x;
+			if(c_offset + threadIdx.x < c){
+				if(res){
+					y[idx1] = x[idx1]/Dtype(sqrt(res));
+				}else{
+					y[idx1] = Dtype(0);
+				}
+			}
+		  	c_offset += blockDim.x;
+		}
+}
 template<typename Real>
 __global__
 static void _add_mat_trans(Real alpha, const Real* src, Real* dst, MatrixDim d,
@@ -3948,6 +4053,13 @@ void cudaF_add_mat(dim3 Gr, dim3 Bl, float alpha, const float* src, float* dst,
     _add_mat<<<Gr,Bl>>>(alpha,src,dst,d,src_stride);
   }
 }
+void cudaF_lasso_col(dim3 Gr, dim3 Bl, float alpha, const float* src, float* dst, MatrixDim d, int src_stride, int A_trans) {
+  col_group_lasso_kernel<<<Gr,Bl>>> (d.rows,d.cols,src,dst)
+}
+void cudaF_lasso_row(dim3 Gr, dim3 Bl, float alpha, const float* src, float* dst, MatrixDim d, int src_stride, int A_trans) {
+  row_group_lasso_kernel<<<Gr,Bl>>> (d.rows,d.cols,src,dst)
+}
+
 
 void cudaF_add_mat_blocks(dim3 Gr, dim3 Bl, float alpha, const float* src,
                           int32_cuda num_row_blocks, int32_cuda num_col_blocks,
@@ -4654,6 +4766,12 @@ void cudaD_add_mat(dim3 Gr, dim3 Bl, double alpha, const double* src,
   } else {
     _add_mat<<<Gr,Bl>>>(alpha,src,dst,d,src_stride);
   }
+}
+void cudaD_lasso_col(dim3 Gr, dim3 Bl, double alpha, const double* src, double* dst, MatrixDim d, int src_stride, int A_trans) {
+  col_group_lasso_kernel<<<Gr,Bl>>> (d.rows,d.cols,src,dst)
+}
+void cudaD_lasso_row(dim3 Gr, dim3 Bl, double alpha, const double* src, double* dst, MatrixDim d, int src_stride, int A_trans) {
+  row_group_lasso_kernel<<<Gr,Bl>>> (d.rows,d.cols,src,dst)
 }
 
 void cudaD_add_mat_blocks(dim3 Gr, dim3 Bl, double alpha, const double* src,

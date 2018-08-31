@@ -2160,6 +2160,8 @@ void ApplyL2Regularization(const Nnet &nnet,
           dynamic_cast<const UpdatableComponent*>(src_component_in);
       UpdatableComponent *dest_component =
           dynamic_cast<UpdatableComponent*>(delta_nnet->GetComponent(c));
+
+      //dest_component->Write(std::cout,1);
       // The following code will segfault if they aren't both updatable, which
       // would be a bug in the calling code.
       BaseFloat lrate = dest_component->LearningRate(),
@@ -2171,6 +2173,35 @@ void ApplyL2Regularization(const Nnet &nnet,
     }
   }
 }
+void ApplyGLRegularization(const Nnet &nnet,
+                           BaseFloat l2_regularize_scale,
+                           Nnet *delta_nnet) {
+  if (l2_regularize_scale == 0.0)
+    return;
+  for (int32 c = 0; c < nnet.NumComponents(); c++) {
+    const Component *src_component_in = nnet.GetComponent(c);
+    if (src_component_in->Properties() & kUpdatableComponent) {
+      const UpdatableComponent *src_component =
+          dynamic_cast<const UpdatableComponent*>(src_component_in);
+      UpdatableComponent *dest_component =
+          dynamic_cast<UpdatableComponent*>(delta_nnet->GetComponent(c));
+
+      //dest_component->Write(std::cout,1);
+      // The following code will segfault if they aren't both updatable, which
+      // would be a bug in the calling code.
+      AffineComponent *tmp1 = dynamic_cast<AffineComponent*> (dest_component);
+      AffineComponent Row(*tmp1), Col(*tmp1);
+      Row->lasso_row(*src_component);
+      Col->lasso_col(*src_component);
+      
+      BaseFloat scale;
+      dest_component->Add(scale, Row);
+      dest_component->Add(scale, Col);
+
+    }
+  }
+}
+
 
 
 } // namespace nnet3

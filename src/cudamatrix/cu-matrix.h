@@ -457,7 +457,11 @@ class CuMatrixBase {
   /// *this += alpha * A
   void AddMat(Real alpha, const CuMatrixBase<Real> &A,
               MatrixTransposeType trans = kNoTrans);
-
+  /// calculate lasso (column)
+  void ColLasso(Real alpha, const CuMatrixBase<Real>& A,
+                                MatrixTransposeType transA = kNoTrans)
+  void RowLasso(Real alpha, const CuMatrixBase<Real>& A,
+                                MatrixTransposeType transA = kNoTrans)
   /// *this += alpha * A.
   void AddSmat(Real alpha, const CuSparseMatrix<Real> &A,
               MatrixTransposeType trans = kNoTrans);
