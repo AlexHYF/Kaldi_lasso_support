@@ -1113,13 +1113,13 @@ void AffineComponent::Add(BaseFloat alpha, const Component &other_in) {
   linear_params_.AddMat(alpha, other->linear_params_);
   bias_params_.AddVec(alpha, other->bias_params_);
 }
-void AffineComponet::lasso_col(const Component &other) {
+void AffineComponent::lasso_col(const Component &other_in) {
   const AffineComponent *other =
       dynamic_cast<const AffineComponent*>(&other_in);
   KALDI_ASSERT(other != NULL);
   linear_params_.ColLasso(other->linear_params_);
 }
-void AffineComponet::lasso_row(const Component &other) {
+void AffineComponent::lasso_row(const Component &other_in) {
   const AffineComponent *other =
       dynamic_cast<const AffineComponent*>(&other_in);
   KALDI_ASSERT(other != NULL);

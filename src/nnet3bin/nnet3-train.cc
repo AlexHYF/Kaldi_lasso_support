@@ -21,23 +21,15 @@
 #include "util/common-utils.h"
 #include "nnet3/nnet-training.h"
 #include "cudamatrix/cu-allocator.h"
-double Matrix [9]= {1,2,3,4,5,6,7,8,9}
-double result [9];
+
 int main(int argc, char *argv[]) {
-//  try {
+  try {
     using namespace kaldi;
     using namespace kaldi::nnet3;
     typedef kaldi::int32 int32;
     typedef kaldi::int64 int64;
-    CuMatrixBase<double> test(Matrix,3,3,1);
-    CuMatrixBase<double> Result(result,3,3,1);
-    Result.ColLasso(0,test);
-    std::cout << "Test result\n";
-    for (int i = 0; i < 9; i++) {
-        std::cout << result[i] << " ";
-    }
-    return 0;
-    /*const char *usage =
+    
+    const char *usage =
         "Train nnet3 neural network parameters with backprop and stochastic\n"
         "gradient descent.  Minibatches are to be created by nnet3-merge-egs in\n"
         "the input pipeline.  This training program is single-threaded (best to\n"
@@ -101,5 +93,5 @@ int main(int argc, char *argv[]) {
   } catch(const std::exception &e) {
     std::cerr << e.what() << '\n';
     return -1;
-  }*/
+  }
 }

@@ -967,8 +967,9 @@ void CuMatrixBase<Real>::AddMat(Real alpha, const CuMatrixBase<Real>& A,
     Mat().AddMat(alpha, A.Mat(), transA);
   }
 }
-void CuMatrixBase<Real>::ColLasso(Real alpha, const CuMatrixBase<Real>& A,
-                                MatrixTransposeType transA = kNoTrans) {
+template<typename Real>
+void CuMatrixBase<Real>::ColLasso(const CuMatrixBase<Real>& A,
+                                MatrixTransposeType transA) {
 
 #if HAVE_CUDA == 1
   if (CuDevice::Instantiate().Enabled()) {
@@ -984,7 +985,7 @@ void CuMatrixBase<Real>::ColLasso(Real alpha, const CuMatrixBase<Real>& A,
     dim3 dimBlock(CU2DBLOCK, CU2DBLOCK);
     dim3 dimGrid(n_blocks(NumCols(), CU2DBLOCK),
                  n_blocks(NumRows(), CU2DBLOCK));
-    cuda_lasso_col(dimGrid, dimBlock, alpha, A.data_,
+    cuda_lasso_col(dimGrid, dimBlock, 0, A.data_,
                  data_, Dim(), A.Stride(),
                  (transA == kTrans ? 1 : 0));
     CU_SAFE_CALL(cudaGetLastError());
@@ -993,11 +994,12 @@ void CuMatrixBase<Real>::ColLasso(Real alpha, const CuMatrixBase<Real>& A,
   } else
 #endif
   {
-    Mat().AddMat(alpha, A.Mat(), transA);
+    Mat().AddMat(0, A.Mat(), transA);
   }
 }
-void CuMatrixBase<Real>::RowLasso(Real alpha, const CuMatrixBase<Real>& A,
-                                MatrixTransposeType transA = kNoTrans) {
+template<typename Real>
+void CuMatrixBase<Real>::RowLasso(const CuMatrixBase<Real>& A,
+                                MatrixTransposeType transA ) {
 
 #if HAVE_CUDA == 1
   if (CuDevice::Instantiate().Enabled()) {
@@ -1013,7 +1015,7 @@ void CuMatrixBase<Real>::RowLasso(Real alpha, const CuMatrixBase<Real>& A,
     dim3 dimBlock(CU2DBLOCK, CU2DBLOCK);
     dim3 dimGrid(n_blocks(NumCols(), CU2DBLOCK),
                  n_blocks(NumRows(), CU2DBLOCK));
-    cuda_lasso_row(dimGrid, dimBlock, alpha, A.data_,
+    cuda_lasso_row(dimGrid, dimBlock, 0, A.data_,
                  data_, Dim(), A.Stride(),
                  (transA == kTrans ? 1 : 0));
     CU_SAFE_CALL(cudaGetLastError());
@@ -1022,7 +1024,7 @@ void CuMatrixBase<Real>::RowLasso(Real alpha, const CuMatrixBase<Real>& A,
   } else
 #endif
   {
-    Mat().AddMat(alpha, A.Mat(), transA);
+    Mat().AddMat(0, A.Mat(), transA);
   }
 }
 template<typename Real>

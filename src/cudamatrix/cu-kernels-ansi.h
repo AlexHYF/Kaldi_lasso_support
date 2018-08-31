@@ -123,6 +123,14 @@ void cudaD_add_mat(dim3 Gr, dim3 Bl, double alpha, const double *src,
                    double *dst, MatrixDim d, int src_stride, int A_trans);
 void cudaF_add_mat(dim3 Gr, dim3 Bl, float alpha, const float *src, float *dst,
                    MatrixDim d, int src_stride, int A_trans);
+void cudaD_lasso_col(dim3 Gr, dim3 Bl, double alpha, const double *src,
+                   double *dst, MatrixDim d, int src_stride, int A_trans);
+void cudaF_lasso_col(dim3 Gr, dim3 Bl, float alpha, const float *src, float *dst,
+                   MatrixDim d, int src_stride, int A_trans);
+void cudaD_lasso_row(dim3 Gr, dim3 Bl, double alpha, const double *src,
+                   double *dst, MatrixDim d, int src_stride, int A_trans);
+void cudaF_lasso_row(dim3 Gr, dim3 Bl, float alpha, const float *src, float *dst,
+                   MatrixDim d, int src_stride, int A_trans);
 void cudaD_add_mat_mat_elements(dim3 Gr, dim3 Bl, double *data,
                                 const double *srcA_data,
                                 const double *srcB_data, MatrixDim dim,

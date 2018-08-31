@@ -4054,10 +4054,10 @@ void cudaF_add_mat(dim3 Gr, dim3 Bl, float alpha, const float* src, float* dst,
   }
 }
 void cudaF_lasso_col(dim3 Gr, dim3 Bl, float alpha, const float* src, float* dst, MatrixDim d, int src_stride, int A_trans) {
-  col_group_lasso_kernel<<<Gr,Bl>>> (d.rows,d.cols,src,dst)
+  col_group_lasso_kernel<<<Gr,Bl>>> (d.rows,d.cols,src,dst);
 }
 void cudaF_lasso_row(dim3 Gr, dim3 Bl, float alpha, const float* src, float* dst, MatrixDim d, int src_stride, int A_trans) {
-  row_group_lasso_kernel<<<Gr,Bl>>> (d.rows,d.cols,src,dst)
+  row_group_lasso_kernel<<<Gr,Bl>>> (d.rows,d.cols,src,dst);
 }
 
 
@@ -4767,11 +4767,13 @@ void cudaD_add_mat(dim3 Gr, dim3 Bl, double alpha, const double* src,
     _add_mat<<<Gr,Bl>>>(alpha,src,dst,d,src_stride);
   }
 }
+
 void cudaD_lasso_col(dim3 Gr, dim3 Bl, double alpha, const double* src, double* dst, MatrixDim d, int src_stride, int A_trans) {
-  col_group_lasso_kernel<<<Gr,Bl>>> (d.rows,d.cols,src,dst)
+  col_group_lasso_kernel<<<Gr,Bl>>> (d.rows,d.cols,src,dst);
 }
+
 void cudaD_lasso_row(dim3 Gr, dim3 Bl, double alpha, const double* src, double* dst, MatrixDim d, int src_stride, int A_trans) {
-  row_group_lasso_kernel<<<Gr,Bl>>> (d.rows,d.cols,src,dst)
+  row_group_lasso_kernel<<<Gr,Bl>>> (d.rows,d.cols,src,dst);
 }
 
 void cudaD_add_mat_blocks(dim3 Gr, dim3 Bl, double alpha, const double* src,
