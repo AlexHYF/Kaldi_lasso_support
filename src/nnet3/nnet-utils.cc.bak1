@@ -2153,7 +2153,6 @@ void ApplyL2Regularization(const Nnet &nnet,
                            Nnet *delta_nnet) {
   if (l2_regularize_scale == 0.0)
     return;
-  int ctn = 0;
   for (int32 c = 0; c < nnet.NumComponents(); c++) {
     const Component *src_component_in = nnet.GetComponent(c);
     if (src_component_in->Properties() & kUpdatableComponent) {
@@ -2161,16 +2160,19 @@ void ApplyL2Regularization(const Nnet &nnet,
           dynamic_cast<const UpdatableComponent*>(src_component_in);
       UpdatableComponent *dest_component =
           dynamic_cast<UpdatableComponent*>(delta_nnet->GetComponent(c));
-      if (ctn++ < 2) continue;
+
       //dest_component->Write(std::cout,1);
       // The following code will segfault if they aren't both updatable, which
       // would be a bug in the calling code.
-      std::fstream weight("weight.txt",std::fstream::out);
-      std::fstream grad("weight2.txt",std::fstream::out);
-      std::fstream collasso("collasso.txt",std::fstream::out);
-      src_component->Write(weight,0);
-      dest_component->lasso_col(1.0,*src_component);
-      src_component->Write(grad,0);
+      AffineComponent *tmp1 = dynamic_cast<AffineComponent*> (dest_component);
+      AffineComponent Row(*tmp1), Col(*tmp1);
+      Row.lasso_row(*src_component);
+      Col.lasso_col(*src_component);
+      std::fstream output("test_out.txt",std::fstream::out);
+      tmp1->Write(output,0);
+      Row.Write(output,0);
+      Col.Write(output,0);
+      output.close();
       KALDI_ASSERT(0);
       BaseFloat lrate = dest_component->LearningRate(),
           l2_regularize = dest_component->L2Regularization();
@@ -2178,6 +2180,34 @@ void ApplyL2Regularization(const Nnet &nnet,
       BaseFloat scale = -2.0 * l2_regularize_scale * lrate * l2_regularize;
       if (scale != 0.0)
         dest_component->Add(scale, *src_component);
+    }
+  }
+}
+void ApplyGLRegularization(const Nnet &nnet,
+                           BaseFloat l2_regularize_scale,
+                           Nnet *delta_nnet) {
+  if (l2_regularize_scale == 0.0)
+    return;
+  for (int32 c = 0; c < nnet.NumComponents(); c++) {
+    const Component *src_component_in = nnet.GetComponent(c);
+    if (src_component_in->Properties() & kUpdatableComponent) {
+      const UpdatableComponent *src_component =
+          dynamic_cast<const UpdatableComponent*>(src_component_in);
+      UpdatableComponent *dest_component =
+          dynamic_cast<UpdatableComponent*>(delta_nnet->GetComponent(c));
+
+      //dest_component->Write(std::cout,1);
+      // The following code will segfault if they aren't both updatable, which
+      // would be a bug in the calling code.
+      AffineComponent *tmp1 = dynamic_cast<AffineComponent*> (dest_component);
+      AffineComponent Row(*tmp1), Col(*tmp1);
+      Row.lasso_row(*src_component);
+      Col.lasso_col(*src_component);
+      
+      BaseFloat scale;
+      dest_component->Add(scale, Row);
+      dest_component->Add(scale, Col);
+
     }
   }
 }

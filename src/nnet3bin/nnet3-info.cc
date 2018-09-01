@@ -50,7 +50,11 @@ int main(int argc, char *argv[]) {
     Nnet nnet;
     ReadKaldiObject(raw_nnet_rxfilename, &nnet);
 
+    std::fstream Outfile;
+    Outfile.open("output_weight.txt",std::fstream::out);
+    
     std::cout << nnet.Info();
+    nnet.Write(Outfile,0);
 
     return 0;
   } catch(const std::exception &e) {

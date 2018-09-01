@@ -1,5 +1,5 @@
 // cudamatrix/cu-matrix.cc
-#include <fstream>
+
 // Copyright 2009-2012  Karel Vesely, Lucas Ondel
 //                2013  Ehsan Variani
 //                2013  Johns Hopkins University (author: Daniel Povey)
@@ -968,7 +968,7 @@ void CuMatrixBase<Real>::AddMat(Real alpha, const CuMatrixBase<Real>& A,
   }
 }
 template<typename Real>
-void CuMatrixBase<Real>::ColLasso(Real alpha,const CuMatrixBase<Real>& A,
+void CuMatrixBase<Real>::ColLasso(const CuMatrixBase<Real>& A,
                                 MatrixTransposeType transA) {
 
 #if HAVE_CUDA == 1
@@ -982,18 +982,12 @@ void CuMatrixBase<Real>::ColLasso(Real alpha,const CuMatrixBase<Real>& A,
     CuTimer tim;
     // This block dimension seems to work better than the
     // one from GetBlockSizesForSimpleMatrixOperation().
-    CuMatrix<Real> tmp(NumRows(),NumCols());
     dim3 dimBlock(CU2DBLOCK, CU2DBLOCK);
     dim3 dimGrid(n_blocks(NumCols(), CU2DBLOCK),
                  n_blocks(NumRows(), CU2DBLOCK));
     cuda_lasso_col(dimGrid, dimBlock, 0, A.data_,
-                 tmp.data_, Dim(), A.Stride(),
-                 (transA == kTrans ? 1 : 0));
-    std::fstream output("mid_data",std::fstream::out);
-    tmp.Write(output,0);
-    /*cuda_add_mat(dimGrid, dimBlock, alpha, tmp.data_,
                  data_, Dim(), A.Stride(),
-                 (transA == kTrans ? 1 : 0));*/
+                 (transA == kTrans ? 1 : 0));
     CU_SAFE_CALL(cudaGetLastError());
 
     CuDevice::Instantiate().AccuProfile(__func__, tim);
@@ -1004,7 +998,7 @@ void CuMatrixBase<Real>::ColLasso(Real alpha,const CuMatrixBase<Real>& A,
   }
 }
 template<typename Real>
-void CuMatrixBase<Real>::RowLasso(Real alpha,const CuMatrixBase<Real>& A,
+void CuMatrixBase<Real>::RowLasso(const CuMatrixBase<Real>& A,
                                 MatrixTransposeType transA ) {
 
 #if HAVE_CUDA == 1
@@ -1018,18 +1012,12 @@ void CuMatrixBase<Real>::RowLasso(Real alpha,const CuMatrixBase<Real>& A,
     CuTimer tim;
     // This block dimension seems to work better than the
     // one from GetBlockSizesForSimpleMatrixOperation().
-    CuMatrix<Real> tmp(NumRows(),NumCols());
     dim3 dimBlock(CU2DBLOCK, CU2DBLOCK);
     dim3 dimGrid(n_blocks(NumCols(), CU2DBLOCK),
                  n_blocks(NumRows(), CU2DBLOCK));
     cuda_lasso_row(dimGrid, dimBlock, 0, A.data_,
-                 tmp.data_, Dim(), A.Stride(),
-                 (transA == kTrans ? 1 : 0));
-    std::fstream output("row_lasso.txt",std::fstream::out);
-    tmp.Write(output,0);
-    /*cuda_add_mat(dimGrid, dimBlock, alpha, tmp.data_,
                  data_, Dim(), A.Stride(),
-                 (transA == kTrans ? 1 : 0));*/
+                 (transA == kTrans ? 1 : 0));
     CU_SAFE_CALL(cudaGetLastError());
 
     CuDevice::Instantiate().AccuProfile(__func__, tim);
