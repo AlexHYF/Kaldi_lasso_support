@@ -537,8 +537,8 @@ class UpdatableComponent: public Component {
   virtual void UnVectorize(const VectorBase<BaseFloat> &params) {
     KALDI_ASSERT(0);
   }
-  virtual void lasso_col(const Component &other) {}
-  virtual void lasso_row(const Component &other) {}
+  virtual void lasso_col(BaseFloat alpha,const Component &other) {}
+  virtual void lasso_row(BaseFloat alpha,const Component &other) {}
 
  protected:
   // to be called from child classes, extracts any learning rate information

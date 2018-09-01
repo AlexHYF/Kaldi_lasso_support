@@ -968,7 +968,7 @@ void CuMatrixBase<Real>::AddMat(Real alpha, const CuMatrixBase<Real>& A,
   }
 }
 template<typename Real>
-void CuMatrixBase<Real>::ColLasso(const CuMatrixBase<Real>& A,
+void CuMatrixBase<Real>::ColLasso(Real alpha,const CuMatrixBase<Real>& A,
                                 MatrixTransposeType transA) {
 
 #if HAVE_CUDA == 1
@@ -982,10 +982,14 @@ void CuMatrixBase<Real>::ColLasso(const CuMatrixBase<Real>& A,
     CuTimer tim;
     // This block dimension seems to work better than the
     // one from GetBlockSizesForSimpleMatrixOperation().
+    CuMatrix<Real> tmp(NumRows(),NumCols());
     dim3 dimBlock(CU2DBLOCK, CU2DBLOCK);
     dim3 dimGrid(n_blocks(NumCols(), CU2DBLOCK),
                  n_blocks(NumRows(), CU2DBLOCK));
     cuda_lasso_col(dimGrid, dimBlock, 0, A.data_,
+                 tmp.data, Dim(), A.Stride(),
+                 (transA == kTrans ? 1 : 0));
+    cuda_add_mat(dimGrid, dimBlock, alpha, tmp.data_,
                  data_, Dim(), A.Stride(),
                  (transA == kTrans ? 1 : 0));
     CU_SAFE_CALL(cudaGetLastError());
@@ -998,7 +1002,7 @@ void CuMatrixBase<Real>::ColLasso(const CuMatrixBase<Real>& A,
   }
 }
 template<typename Real>
-void CuMatrixBase<Real>::RowLasso(const CuMatrixBase<Real>& A,
+void CuMatrixBase<Real>::RowLasso(Real alpha,const CuMatrixBase<Real>& A,
                                 MatrixTransposeType transA ) {
 
 #if HAVE_CUDA == 1
@@ -1012,10 +1016,14 @@ void CuMatrixBase<Real>::RowLasso(const CuMatrixBase<Real>& A,
     CuTimer tim;
     // This block dimension seems to work better than the
     // one from GetBlockSizesForSimpleMatrixOperation().
+    CuMatrix<Real> tmp(NumRows(),NumCols());
     dim3 dimBlock(CU2DBLOCK, CU2DBLOCK);
     dim3 dimGrid(n_blocks(NumCols(), CU2DBLOCK),
                  n_blocks(NumRows(), CU2DBLOCK));
     cuda_lasso_row(dimGrid, dimBlock, 0, A.data_,
+                 tmp.data_, Dim(), A.Stride(),
+                 (transA == kTrans ? 1 : 0));
+    cuda_add_mat(dimGrid, dimBlock, alpha, tmp.data_,
                  data_, Dim(), A.Stride(),
                  (transA == kTrans ? 1 : 0));
     CU_SAFE_CALL(cudaGetLastError());

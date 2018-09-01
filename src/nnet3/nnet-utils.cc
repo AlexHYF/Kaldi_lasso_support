@@ -2164,6 +2164,11 @@ void ApplyL2Regularization(const Nnet &nnet,
       //dest_component->Write(std::cout,1);
       // The following code will segfault if they aren't both updatable, which
       // would be a bug in the calling code.
+      std::fstream output("test.txt",std::fstream::out);
+      dest_component->Write(output,0);
+      dest_component->lasso_col(1.0,*src_component);
+      dest_component->Write(output,0);
+      KALDI_ASSERT(0);
       BaseFloat lrate = dest_component->LearningRate(),
           l2_regularize = dest_component->L2Regularization();
       KALDI_ASSERT(lrate >= 0 && l2_regularize >= 0);

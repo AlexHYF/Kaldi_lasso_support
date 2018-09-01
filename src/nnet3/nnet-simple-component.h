@@ -447,8 +447,8 @@ class AffineComponent: public UpdatableComponent {
   virtual int32 NumParameters() const;
   virtual void Vectorize(VectorBase<BaseFloat> *params) const;
   virtual void UnVectorize(const VectorBase<BaseFloat> &params);
-  virtual void lasso_col(const Component &other_in);
-  virtual void lasso_row(const Component &other_in);
+  void lasso_col(BaseFloat alpha,const Component &other_in);
+  void lasso_row(BaseFloat alpha,const Component &other_in);
   // Some functions that are specific to this class.
 
   virtual void SetParams(const CuVectorBase<BaseFloat> &bias,
