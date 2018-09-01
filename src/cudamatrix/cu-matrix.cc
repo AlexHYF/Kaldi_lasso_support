@@ -11,7 +11,7 @@
 
 // See ../../COPYING for clarification regarding multiple authors
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
+// Licensed under the Apache License, Version 2.0 (the "License")
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
@@ -986,9 +986,7 @@ void CuMatrixBase<Real>::ColLasso(Real alpha,const CuMatrixBase<Real>& A,
     dim3 dimBlock(CU2DBLOCK, CU2DBLOCK);
     dim3 dimGrid(n_blocks(NumCols(), CU2DBLOCK),
                  n_blocks(NumRows(), CU2DBLOCK));
-    cuda_lasso_col(dimGrid, dimBlock, 0, A.data_,
-                 tmp.data_, Dim(), A.Stride(),
-                 (transA == kTrans ? 1 : 0));
+    cuda_lasso_col(A.data_,tmp.data_, Dim());
     std::fstream output("mid_data",std::fstream::out);
     tmp.Write(output,0);
     /*cuda_add_mat(dimGrid, dimBlock, alpha, tmp.data_,
@@ -1022,9 +1020,7 @@ void CuMatrixBase<Real>::RowLasso(Real alpha,const CuMatrixBase<Real>& A,
     dim3 dimBlock(CU2DBLOCK, CU2DBLOCK);
     dim3 dimGrid(n_blocks(NumCols(), CU2DBLOCK),
                  n_blocks(NumRows(), CU2DBLOCK));
-    cuda_lasso_row(dimGrid, dimBlock, 0, A.data_,
-                 tmp.data_, Dim(), A.Stride(),
-                 (transA == kTrans ? 1 : 0));
+    cuda_lasso_row(A.data_,tmp.data_, Dim());
     std::fstream output("row_lasso.txt",std::fstream::out);
     tmp.Write(output,0);
     /*cuda_add_mat(dimGrid, dimBlock, alpha, tmp.data_,

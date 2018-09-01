@@ -195,23 +195,21 @@ inline void cuda_add_mat(dim3 Gr, dim3 Bl, float alpha, const float *src,
                          float *dst, MatrixDim d, int src_stride, int A_trans) {
   cudaF_add_mat(Gr, Bl, alpha, src, dst, d, src_stride, A_trans);
 }
-inline void cuda_lasso_col(dim3 Gr, dim3 Bl, double alpha, const double *src,
-                         double *dst, MatrixDim d, int src_stride,
-                         int A_trans) {
-  cudaD_lasso_col(Gr, Bl, alpha, src, dst, d, src_stride, A_trans);
+inline void cuda_lasso_col(const double *src,
+                         double *dst, MatrixDim d) {
+  Dcaffe_gpu_bar_group_lasso(d.rows,d.cols,src,dst,1);
 }
-inline void cuda_lasso_col(dim3 Gr, dim3 Bl, float alpha, const float *src,
-                         float *dst, MatrixDim d, int src_stride, int A_trans) {
-  cudaF_lasso_col(Gr, Bl, alpha, src, dst, d, src_stride, A_trans);
+inline void cuda_lasso_col(const float *src,
+                         float *dst, MatrixDim d) {
+  Fcaffe_gpu_bar_group_lasso(d.rows,d.cols,src,dst,1);
 }
-inline void cuda_lasso_row(dim3 Gr, dim3 Bl, double alpha, const double *src,
-                         double *dst, MatrixDim d, int src_stride,
-                         int A_trans) {
-  cudaD_lasso_row(Gr, Bl, alpha, src, dst, d, src_stride, A_trans);
+inline void cuda_lasso_row(const double *src,
+                         double *dst, MatrixDim d) {
+  Dcaffe_gpu_bar_group_lasso(d.rows,d.cols,src,dst,0);
 }
-inline void cuda_lasso_row(dim3 Gr, dim3 Bl, float alpha, const float *src,
-                         float *dst, MatrixDim d, int src_stride, int A_trans) {
-  cudaF_lasso_row(Gr, Bl, alpha, src, dst, d, src_stride, A_trans);
+inline void cuda_lasso_row( const float *src,
+                         float *dst, MatrixDim d) {
+  Fcaffe_gpu_bar_group_lasso(d.rows,d.cols,src,dst,0);
 }
 inline void cuda_add_mat_mat_elements(dim3 Gr, dim3 Bl, double *data,
                                       const double *srcA_data,

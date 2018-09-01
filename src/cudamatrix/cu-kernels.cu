@@ -30,7 +30,6 @@
 #include "cudamatrix/cu-kernels-ansi.h"
 #include <stdio.h>
 
-
 /***********************************************************************
  * Generic __device__ functions
  */
@@ -4052,13 +4051,13 @@ void cudaF_add_mat(dim3 Gr, dim3 Bl, float alpha, const float* src, float* dst,
     _add_mat<<<Gr,Bl>>>(alpha,src,dst,d,src_stride);
   }
 }
-void cudaF_lasso_col(dim3 Gr, dim3 Bl, float alpha, const float* src, float* dst, MatrixDim d, int src_stride, int A_trans) {
+void cudaF_lasso_col(const float* src, float* dst, MatrixDim d) {
     int threads_per_block = 512;
     dim3 block(d.cols,1);
 		dim3 thread(1,d.rows>threads_per_block ? threads_per_block:d.rows );//CAFFE_CUDA_NUM_THREADS
 		col_group_lasso_kernel<<<block,thread>>>(d.rows,d.cols,src,dst);
 }
-void cudaF_lasso_row(dim3 Gr, dim3 Bl, float alpha, const float* src, float* dst, MatrixDim d, int src_stride, int A_trans) {
+void cudaF_lasso_row(const float* src, float* dst, MatrixDim d) {
   int threads_per_block = 512;
   dim3 block(1,d.rows);
   dim3 thread(d.cols>threads_per_block ? threads_per_block:d.cols, 1);//CAFFE_CUDA_NUM_THREADS
@@ -4773,13 +4772,41 @@ void cudaD_add_mat(dim3 Gr, dim3 Bl, double alpha, const double* src,
   }
 }
 
-void cudaD_lasso_col(dim3 Gr, dim3 Bl, double alpha, const double* src, double* dst, MatrixDim d, int src_stride, int A_trans) {
+void cudaD_lasso_col(const double* src, double* dst, MatrixDim d) {
   int threads_per_block = 512;
     dim3 block(d.cols,1);
 		dim3 thread(1,d.rows>threads_per_block ? threads_per_block:d.rows );//CAFFE_CUDA_NUM_THREADS
 		col_group_lasso_kernel<<<block,thread>>>(d.rows,d.cols,src,dst);
 }
-void cudaD_lasso_row(dim3 Gr, dim3 Bl, double alpha, const double* src, double* dst, MatrixDim d, int src_stride, int A_trans) {
+void Fcaffe_gpu_bar_group_lasso(const int n, const int c, const float* x, float* y, bool along_column_or_row){
+	int threads_per_block = get_threads_per_block();
+	//LOG(INFO)<<"threads_per_block "<<threads_per_block;
+	if(along_column_or_row){
+		dim3 block(c,1);
+		dim3 thread(1,n>threads_per_block ? threads_per_block:n );//CAFFE_CUDA_NUM_THREADS
+		col_group_lasso_kernel<<<block,thread>>>(n,c,x,y);
+	}else{
+		dim3 block(1,n);
+		dim3 thread(c>threads_per_block ? threads_per_block:c, 1);//CAFFE_CUDA_NUM_THREADS
+		row_group_lasso_kernel<<<block,thread>>>(n,c,x,y);
+	}
+	//CUDA_POST_KERNEL_CHECK;
+}
+void Dcaffe_gpu_bar_group_lasso(const int n, const int c, const double* x, double* y, bool along_column_or_row){
+	int threads_per_block = get_threads_per_block();
+	//LOG(INFO)<<"threads_per_block "<<threads_per_block;
+	if(along_column_or_row){
+		dim3 block(c,1);
+		dim3 thread(1,n>threads_per_block ? threads_per_block:n );//CAFFE_CUDA_NUM_THREADS
+		col_group_lasso_kernel<<<block,thread>>>(n,c,x,y);
+	}else{
+		dim3 block(1,n);
+		dim3 thread(c>threads_per_block ? threads_per_block:c, 1);//CAFFE_CUDA_NUM_THREADS
+		row_group_lasso_kernel<<<block,thread>>>(n,c,x,y);
+	}
+	//CUDA_POST_KERNEL_CHECK;
+}
+void cudaD_lasso_row(const double* src, double* dst, MatrixDim d) {
   int threads_per_block = 512;
   dim3 block(1,d.rows);
   dim3 thread(d.cols>threads_per_block ? threads_per_block:d.cols, 1);//CAFFE_CUDA_NUM_THREADS

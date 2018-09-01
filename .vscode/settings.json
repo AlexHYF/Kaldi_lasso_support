@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.tex": "plaintext",
-        "memory": "cpp"
+        "memory": "cpp",
+        "__locale": "cpp"
     }
 }
